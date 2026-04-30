@@ -1,9 +1,14 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
+// In production: VITE_API_URL = https://taskflow-backend-ltdi.onrender.com/api
+// In local dev: falls back to '/api' (proxied by Vite to localhost:5000)
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: false,
 });
 
 // Attach access token to every request
@@ -39,7 +44,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken });
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = data.data;
         useAuthStore.getState().setTokens(accessToken, newRefreshToken);
         processQueue(null, accessToken);
